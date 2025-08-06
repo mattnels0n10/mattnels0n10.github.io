@@ -1,0 +1,665 @@
+---
+title: Predictive and Explanatory Modeling of Minute Maid Orange Juice Purchases Using
+  Logistic Regression
+author: "Matt Nelson"
+date: "2023-11-09"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include = FALSE}
+#Load Packages
+library(ISLR)
+library(tidyverse)
+library(GGally)
+library(ggcorrplot)
+library(gridExtra)
+library(caret)
+library(ggplot2)
+library(DescTools)
+library(sjPlot)
+library(oddsratio)
+library(ggeffects)
+```
+
+
+``` {r include = FALSE}
+#Load Data
+data(OJ)
+```
+## Introduction
+We are tasked with creating a predictive model of Minute Maid orange juice purchases for the Grab-n-Go purchasing team to help assist in proper planning.  In addition, we will use explanatory modeling to identify important purchase variables to help the marketing department create an advertising profile of customers who purchase Minute Maid orange juice.
+
+For this project we will be using data gathered containing 1070 purchases where the customer either purchased Citrus Hill or Minute Maid Orange Juice.  There are a total of 18 variables in the data set.  The project is broken down into 3 phases.  These include, exploratory data analysis, purchasing, and marketing.
+
+The exploratory data analysis portion will consist of modifying the data set by identifying and properly handling missing values, variable redundancies, skewness, and outliers among quantitative variables.  Also, we will identify variables with very small observations in categorical variables and modify as deemed necessary.  In addition we will note the prevalence of Minute Maid purchases.  This will help create a baseline when gauging the quality of our predictive model.
+
+The purchasing portion of the project will consist of creating a predictive model of likely Minute Maid orange juice purchase for the Purchasing team.  This will be done by splitting the OJ data set into a training and validation set.  We will then create a model with the training set and test it against the validation set to determine it's accuracy, sensitivity, and specificity.  
+
+Lastly, the marketing portion of the project we will develop multiple logistic models to help find a "best" model.  From this model we will identify the statistically significant variables.  With these variables, we will construct 95% confidence intervals, and plot predicted purchase probabilities to help create a customer profile of someone likely to purchase Minute Maid orange juice.
+
+
+## Exploratory Data Analysis
+
+```{r echo=FALSE}
+glimpse(OJ)
+```
+
+
+```{r include=FALSE}
+#Check for missing values
+colSums(is.na(OJ))
+```
+
+After investigating the data, no missing values were found. For this project the response
+variable is called Purchase and is categorical. The labels are CH and MM and represent
+whether the customer purchased Citrus Hill (CH) or Minute Maid (MM). Here, we will
+consider Minute Maid a success in a logistic regression. 39% of respondents in the survey
+purchased Minute Maid orange juice. This is also known as prevalence.
+
+```{r}
+# Transform the Purchase 1 and 0.
+OJ$Purchase <- ifelse(OJ$Purchase == "MM",1,0)
+```
+
+
+```{r include = FALSE}
+#Calculate Prevelance
+OJ %>% summarise(prev = sum(Purchase == "MM")/n())
+```
+
+Next, we will sort out the variables and define each as being either categorical or
+quantitative.  Below is a list of variables sorted by either categorical or quantitative.  We will want to make sure the OJ data set reflects these data types.
+
+Categorical Variables: StoreID, SpecialCH, SpecialMM, Store7, STORE, WeekofPurchase
+
+Quantitative Variables: PriceCH, PriceMM, DiscCH, DiscMM, LoyalCH, SalePriceMM, SalePriceCH, PriceDiff, PctDiscMM, PctDiscCH, ListPriceDiff
+
+```{r echo=TRUE, results='hide'}
+# Make sure each variable’s data type is correctly defined
+OJ$StoreID <- as.factor(OJ$StoreID)
+OJ$SpecialCH <- as.factor(OJ$SpecialCH)
+OJ$SpecialMM <- as.factor(OJ$SpecialMM)
+OJ$STORE <- as.factor(OJ$STORE)
+OJ$WeekofPurchase <- as.factor(OJ$WeekofPurchase)
+
+```
+
+
+
+We will want to investigate which variables are potentialy useful for prediction and where there are redundancies.
+
+As we can see from the correlation plot below, there are several highly correlated variables we will want to remove due to redundancies. 
+
+```{r somePlot, echo=FALSE, fig.width=5, fig.height=3, warning=FALSE}
+#Correlation Plot to find correlated variables
+OJ %>% ggcorr(method = c("pairwise"), label_round = 2, label = TRUE, label_size = 2,
+              size = 2.5, angle = -10, hjust = 1, layout.exp = 2)+
+  theme(legend.position="none")
+```
+
+
+
+### Redundant Variables that will Be Removed :
+* DiscCH = PriceCH - SalePriceCH
++ DiscMM = (PriceCH + ListPriceDiff) - (SalePriceCH + PriceDiff)
++ PctDiscMM = ((PriceCH + ListPriceDiff) - (SalePriceCH + PriceDiff)) / (PriceCH + ListPriceDiff)
++ PctDiscCH = (PriceCH - SalePriceCH) / PriceCH
++ StoreID = Similar information provided in the Store7 variable
++ STORE = Similar information provide in the StoreID variable
++ PriceMM = PriceCH + ListPriceDiff
++ SalePriceMM = SalePriceCH + PriceDiff
+
+### Useful variables
+* PriceCH
++ SalePriceCH
++ PriceDiff
++ ListPriceDiff
++ WeekofPurchase
++ Store7
++ LoyalCH
++ SpecialMM - (We will further explore this variable)
++ SpecialCH - (We will further explore this variable)
+
+
+```{r echo=FALSE}  
+#Remove Redundant Variables
+OJ_remove <- OJ %>%
+  select(-c("DiscCH","DiscMM","PctDiscMM","PctDiscCH","StoreID","STORE","PriceMM","SalePriceMM"))
+```  
+
+
+After removing the redundant variables we now see there are no longer highly correlated
+variables as seen below in Fig. 1. We will now check these quantitative variables
+for severe skewness and outliers.
+
+**Skewness**: There doesn't seem to be any severe skewness as shown on the diagonal of Fig. 1.
+
+**Outliers:** As shown in Fig. 2, there appear to be outliers in the SalePriceCH and PriceDiff variables.  However, after investigating these values within the dataframe, they look to be legitimate samples and will remain in the model.
+
+```{r echo=FALSE, fig.width=4, fig.height=3}
+#Paired plot to show relevant variable correlations and check for skewness 
+p11<- OJ_remove %>% ggpairs(c("PriceCH","ListPriceDiff","LoyalCH","SalePriceCH","PriceDiff"), lower = "blank") + 
+  ggtitle("Fig. 1") +
+  theme(strip.text.x = element_text(size = 5),
+           strip.text.y = element_text(size = 5),plot.title = element_text(size = 12))
+```
+
+
+
+
+```{r include=FALSE}
+#Create Boxplots to observe outliers
+p1 <- OJ_remove%>% ggplot(aes(y =PriceCH)) +
+  geom_boxplot()
+p2 <- OJ_remove%>% ggplot(aes(y =SalePriceCH)) +
+  geom_boxplot()
+p3 <- OJ_remove%>% ggplot(aes(y =PriceDiff)) +
+  geom_boxplot()
+p4 <- OJ_remove%>% ggplot(aes(y =ListPriceDiff)) +
+  geom_boxplot()
+p5 <- OJ_remove%>% ggplot(aes(y =LoyalCH)) + 
+  geom_boxplot()
+
+```
+
+```{r echo=FALSE, fig.show="hold", out.width="50%"}
+#Outlier, skewness, and correlation plots
+p11
+grid.arrange(p1,p2,p3,p4,p5, nrow=2, top = grid::textGrob("Fig.2", x = 0, hjust = 0))
+```
+
+
+
+
+### Categorical Variables
+
+From observing the categorical variables, there appear to be large difference in levels between 1 and 0 in both the SpecialCH and SpecialMM as shown below.  To combat this, I will create a new variable called Special and remove SpecialCH and SpecialMM from the data set.  In this variable, 1 will represent a week where there was a promotion on CH or MM.  0 will show no promotion that week.
+
+```{r include=FALSE}
+#OJ Data set with redundant variables removed
+OJ_final <- OJ_remove %>% 
+  mutate(Special = as.factor(ifelse(SpecialCH == "1" | SpecialMM == "1",1,0)))%>%
+  select( -c("SpecialCH", "SpecialMM"))
+```
+
+```{r include = FALSE}
+p6 <- OJ_remove%>% ggplot(aes(x = as.integer(WeekofPurchase))) +
+  geom_histogram(bins = 20)+xlab("Week of Purchase")
+p7 <- OJ_remove%>% ggplot(aes(x = SpecialCH), fill=SpecialCH) + 
+  geom_bar()
+p8 <- OJ_remove%>% ggplot(aes(SpecialMM), fill=SpecialMM) + 
+  geom_bar()
+p9 <- OJ_remove%>% ggplot(aes(Store7),fill=Store7) + 
+  geom_bar()
+p10<-OJ_final %>% ggplot(aes(Special), fill = Special) + geom_bar()
+```
+
+```{r echo=FALSE,  fig.height=2, fig.width=8}
+grid.arrange(p6,p7,p8,p9, nrow=1)
+
+```
+
+The level between 1 and 0 in the new Special variable becomes more balanced.
+
+```{r echo=FALSE, fig.width=1.75, fig.height=1.75, warning=FALSE}
+p10
+```
+
+
+## Purchasing
+**Predict the chance of a customer purchasing Minute Maid orange juice.**
+
+We will briefly discuss the process of data partitioning along with predictive model creation and confusion matrix development.  However, our main focus will be on the accuracy, sensitivity, and specificity of the validation data set.  These terms will be defined below.
+
+### Steps for Creating a Predictive Model
+**Data Partition** 
+Using 60% as a training set and the remaining 40% as a validation set.
+
+```{r include=FALSE}
+set.seed(1234)
+#Partition the data into a training and validation set
+train.index <- createDataPartition(OJ_final$Purchase, p=.6,
+                                   list = FALSE, times = 1)
+
+train.df <- OJ_final[train.index, ]
+valid.df <- OJ_final[-train.index, ]
+
+
+```
+
+**Training Set**
+Here we will use the training data set to create a model to generate predicted results.  We will analyze the results in a confusion matrix.  From this matrix (shown in Fig.3 below) we can find the accuracy, sensitivity, and specificity of the model. More on this in the confusion matrix section. 
+
+
+```{r include=FALSE} 
+
+
+
+optimalCutoff <-
+  function (actuals,
+            predictedScores,
+            optimiseFor = "misclasserror",
+            returnDiagnostics = FALSE)
+  {
+    sequence <- seq(max(predictedScores), min(predictedScores),
+                    -0.01)
+    sensMat <-
+      data.frame(
+        CUTOFF = sequence,
+        FPR = numeric(length(sequence)),
+        TPR = numeric(length(sequence)),
+        YOUDENSINDEX = numeric(length(sequence))
+      )
+    sensMat[, c(2:3)] <-
+      as.data.frame(t(mapply(
+        getFprTpr,
+        threshold = sequence,
+        MoreArgs = list(actuals = actuals, predictedScores = predictedScores)
+      )))
+    sensMat$YOUDENSINDEX <-
+      mapply(
+        youdensIndex,
+        threshold = sequence,
+        MoreArgs = list(actuals = actuals, predictedScores = predictedScores)
+      )
+    sensMat$SPECIFICITY <- (1 - as.numeric(sensMat$FPR))
+    sensMat$MISCLASSERROR <-
+      mapply(
+        misClassError,
+        threshold = sequence,
+        MoreArgs = list(actuals = actuals, predictedScores = predictedScores)
+      )
+    if (optimiseFor == "Both") {
+      rowIndex <-
+        which(sensMat$YOUDENSINDEX == max(as.numeric(sensMat$YOUDENSINDEX)))[1]
+    }
+    else if (optimiseFor == "Ones") {
+      rowIndex <- which(sensMat$TPR == max(as.numeric(sensMat$TPR)))[1]
+    }
+    else if (optimiseFor == "Zeros") {
+      rowIndex <-
+        tail(which(sensMat$SPECIFICITY == max(as.numeric(
+          sensMat$SPECIFICITY
+        ))),
+        1)
+    }
+    else if (optimiseFor == "misclasserror") {
+      rowIndex <-
+        tail(which(sensMat$MISCLASSERROR == min(as.numeric(
+          sensMat$MISCLASSERROR
+        ))),
+        1)
+    }
+    if (!returnDiagnostics) {
+      return(sensMat$CUTOFF[rowIndex])
+    }
+    else {
+      output <- vector(length = 6, mode = "list")
+      names(output) <- c(
+        "optimalCutoff",
+        "sensitivityTable",
+        "misclassificationError",
+        "TPR",
+        "FPR",
+        "Specificity"
+      )
+      output$optimalCutoff <- sensMat$CUTOFF[rowIndex]
+      output$sensitivityTable <- sensMat
+      output$misclassificationError <- misClassError(actuals,
+                                                     predictedScores, threshold = sensMat$CUTOFF[rowIndex])
+      output$TPR <-
+        getFprTpr(actuals, predictedScores, threshold = sensMat$CUTOFF[rowIndex])[[2]]
+      output$FPR <-
+        getFprTpr(actuals, predictedScores, threshold = sensMat$CUTOFF[rowIndex])[[1]]
+      output$Specificity <- sensMat$SPECIFICITY[rowIndex]
+      return(output)
+    }
+  }
+
+getFprTpr <- function(actuals, predictedScores, threshold = 0.5) {
+  return(list(
+    1 - specificity(
+      actuals = actuals,
+      predictedScores = predictedScores,
+      threshold = threshold
+    ),
+    sensitivity(
+      actuals = actuals,
+      predictedScores = predictedScores,
+      threshold = threshold
+    )
+  ))
+}
+
+specificity <- function (actuals, predictedScores, threshold = 0.5)
+{
+  predicted_dir <- ifelse(predictedScores < threshold, 0, 1)
+  actual_dir <- actuals
+  no_without_and_predicted_to_not_have_event <- sum(actual_dir !=
+                                                      1 & predicted_dir != 1, na.rm = T)
+  no_without_event <- sum(actual_dir != 1, na.rm = T)
+  return(no_without_and_predicted_to_not_have_event / no_without_event)
+}
+
+sensitivity <- function (actuals, predictedScores, threshold = 0.5)
+{
+  predicted_dir <- ifelse(predictedScores < threshold, 0, 1)
+  actual_dir <- actuals
+  no_with_and_predicted_to_have_event <- sum(actual_dir ==
+                                               1 & predicted_dir == 1, na.rm = T)
+  no_with_event <- sum(actual_dir == 1, na.rm = T)
+  return(no_with_and_predicted_to_have_event / no_with_event)
+}
+
+youdensIndex <- function (actuals, predictedScores, threshold = 0.5)
+{
+  Sensitivity <- sensitivity(actuals, predictedScores, threshold = threshold)
+  Specificity <- specificity(actuals, predictedScores, threshold = threshold)
+  return(Sensitivity + Specificity - 1)
+}
+
+misClassError <- function (actuals, predictedScores, threshold = 0.5)
+{
+  predicted_dir <- ifelse(predictedScores < threshold, 0, 1)
+  actual_dir <- actuals
+  return(round(
+    sum(predicted_dir != actual_dir, na.rm = T) / length(actual_dir),
+    4
+  ))
+}
+```
+
+```{r include=FALSE}
+#create logistic regression model with variables deemed useful
+model.2 <- glm(Purchase ~ ., data = train.df,
+               family = "binomial")  
+
+#generate predicted values from the training data set
+pred.p2 <- predict(model.2, newdata = train.df, type = "response")
+
+#find cutoff threshold that minimized misclassification error
+opt.cut <- optimalCutoff(train.df$Purchase,
+                         predictedScores = pred.p2,
+                         optimiseFor = "misclasserror", returnDiagnostics = TRUE)
+
+#get the predicted classifications based on the optimal cutoff
+pred.class.opt <- ifelse(pred.p2 > opt.cut$optimalCutoff, 1, 0)
+
+#generate the confusion matrix
+cmat.opt <- caret::confusionMatrix(as.factor(pred.class.opt),
+                          as.factor(train.df$Purchase ),
+                          positive="1")
+
+```
+
+
+**Apply Validation Set**
+Here we will see how good our model is at prediction.  To do this we will plug the validation set into the training set model to see how well our model does at predicting values within the validation data set.  
+
+
+```{r include=FALSE}
+
+#put test data into the model
+pred.p2.valid <- predict(model.2, newdata = valid.df, type = "response")
+
+#get the predicted classifications based on the test set's optimal cutoff
+pred.class.opt.valid <- ifelse(pred.p2.valid > opt.cut$optimalCutoff, 1, 0)
+
+#generate a confusion matrix
+cmat.opt.valid <- confusionMatrix(as.factor(pred.class.opt.valid),
+                          as.factor(valid.df$Purchase),
+                          positive="1")
+
+```
+
+```{r include=FALSE}
+#Create Plots of Confusion Matrix
+cm.opt <- data.frame(cmat.opt$table)
+
+train.plot <- cm.opt %>% ggplot(aes(x = Reference, y= factor(Prediction, level = c(1,0)), 
+                      fill= Freq)) +
+  geom_tile()+geom_text(aes(label=Freq)) +
+  scale_fill_gradient(low="white", high="#009194") +
+    labs(x = "Reference",y = "Prediction", subtitle = "Fig. 3") + 
+  ggtitle("Training Data Set Confusion Matrix") +
+  scale_x_discrete(position = "top") + theme(legend.position="none",
+                                             plot.title = element_text(hjust = .5))
+
+cm.opt.valid <- data.frame(cmat.opt.valid$table)
+
+valid.plot <- cm.opt.valid %>% ggplot(aes(x = Reference, y= factor(Prediction, level = c(1,0)), 
+                                                     fill= Freq)) +
+  geom_tile()+geom_text(aes(label=Freq)) +
+  scale_fill_gradient(low="white", high="#009194") +
+    labs(x = "Reference",y = "Prediction", subtitle = "Fig. 4") +
+  ggtitle("Validation Set Confusion Matrix") +
+  scale_x_discrete(position = "top") + theme(legend.position="none", 
+                                             plot.title = element_text(hjust = .5))
+```
+**Confusion Matrix Creation**
+Below is a plotted confusion matrix.  The confusion matrix is used to show the results of each the training and validation data sets when input into the model.  Prediction and Reference (what actually happened) are on the y and x axis.  1 represents a Minute Maid purchase, 0 represents a non-Minute Maid purchase. The numbers in the squares represent instances.
+
+```{r echo=FALSE,  fig.height=3, fig.width=8}
+grid.arrange(train.plot,valid.plot, nrow=1)
+
+```
+
+
+### Accuracy
+**Accuracy** is defined by how often our prediction was correct.  This can be done by adding the True Positives (instances where our model predicted a Minute Maid Purchase and the purchase was made) + True Negatives (instances where our model predicted a non-Minute Maid Purchase and the non-Minute Maid purchase was made) / all instances (sum of all 4 squares within the confusion matrix).  With accuracy, we can check our model for overfitting and compare it against a naive prediction.
+
+```{r echo=FALSE}
+#Training Set Accuracy
+paste("Training Set Accuracy =" ,round(cmat.opt$overall[1],3))
+
+#Validation Set Accuracy
+paste("Validation Set Accuracy =" ,round(cmat.opt.valid$overall[1],3))
+
+```
+
+### Check Against Naive Prediction
+The proportion of customers who purchased Minute Maid in the validation set is .371.  This is known as **prevalence**.  This in turn means the prevalence of a non-Minute Maid purchase is 1-.371 or .63.  In a naive model, our accuracy would be .63.  Given the accuracy of the validation set (.794) is larger than .63, we can confirm our model does a better of predicting the naive model.
+
+```{r}
+#Prevalence calculated
+valid.df %>% summarise(Prevalence = round(sum(Purchase)/n(),3))
+
+```
+
+
+ 
+### Check for Overfitting
+We say a model is "overfit" when the accuracy in the training set is significantly larger than the accuracy in the validation set.  The difference between training and validation accuracy is 9.5%.  Being the difference is relatively small, we can say there is not an overfitting problem.
+
+
+### Sensitivity and Specificity from the Confusion Matrix
+
+**Sensitivity** is used to define how well the model is at predicting Minute Maid purchases.  The number of true positives (instances where our model predicted a Minute Maid Purchase and the purchase was made) divided by the sum of the true positive and false negatives (instances where our model predicted a non-Minute Maid Purchase but the Minute Maid purchase was made).  We can find these numbers by referencing the Validation Set Confusion Matrix (Fig. 4).  In this case, the number of true positives in the validation set is 126.  The number of false negatives is 36.  Therefore 123 / (36+123) = .77 
+
+```{r}
+#Sensitivity calculated
+round(cmat.opt.valid$byClass[1],3)
+```
+
+**Specificity** is used to define how well our model is at predicting non-Minute Maid purchases.  The number of true negatives (instances where our model predicted a non-Minute Maid Purchase, and the non-Minute Maid purchase was made) divided by the sum of the true negatives and false positives (instances where our model predicted a Minute Maid Purchase but the Minute Maid purchase was not made).  Again, we can find these numbers by referencing the Validation Set Confusion Matrix (Fig. 4).  In this case, the number of true negatives in the validation set is 217.  The number of false positives is 52.  Therefore, 217 / (217 + 52) = .81
+
+```{r}
+#Specificity calculated
+round(cmat.opt.valid$byClass[2],3)
+```
+
+# Marketing
+
+Our goal for this portion is to develop a best fit logistic regression model.  From this model we will determine the statistically significant variables and interpret the 95% confidence intervals of the odds ratios of these variables.  In addition we will use these variables in the hopes of developing a customer profile of a likely person to purchase Minute Maid that the marketing team can target in their advertising.
+
+### Generate a "best" fit logistic regression model.
+Below we have put together 4 logistic regression models using glm().  Each model lists predictor variables used in the model.  Model_4 is the "best" fit model when comparing AIC and McFadden's metrics of fit and will be used in further analysis to offer suggestions on increasing the proportion of Minute Maid purchases.
+
+**Model 1:** Predictor Variables: LoyalCH, PriceCH, SalePriceCH, PriceDiff, ListPriceDiff, Special
+```{r include=FALSE} 
+model_1 <- glm(Purchase ~ . -WeekofPurchase -Store7, data = OJ_final, family = "binomial" )
+```
+
+```{r include=FALSE,}
+#Calculate AIC and McFadden pseudo-r2
+paste("AIC:",round(extractAIC(model_1, k=2)[2],2))
+
+round(PseudoR2(model_1, which = "McFadden"),4)
+```
+
+**Model 2:**Predictor Variables: LoyalCH, PriceCH, SalePriceCH, PriceDiff, ListPriceDiff 
+```{r include=FALSE}
+model_2 <- glm(Purchase ~ LoyalCH + ListPriceDiff + SalePriceCH + PriceDiff , 
+               data = OJ_final, family = "binomial" )
+```
+
+```{r include=FALSE}
+#Calculate AIC and McFadden pseudo-r2
+paste("AIC:",round(extractAIC(model_2, k=2)[2],2))
+
+round(PseudoR2(model_2, which = "McFadden"),4)
+```
+
+**Model 3:**Predictor Variables: LoyalCH, PriceCH, ListPriceDiff, PriceDiff
+```{r include=FALSE}
+model_3 <- glm(Purchase ~ LoyalCH + ListPriceDiff + PriceDiff, 
+               data = OJ_final, family = "binomial" )
+```
+
+```{r include=FALSE}
+#Calculate AIC and McFadden pseudo-r2
+paste("AIC:",round(extractAIC(model_3, k=2)[2],2))
+
+round(PseudoR2(model_3, which = "McFadden"),4)
+```
+
+**Model 4:**Predictor Variables: LoyalCH, Store7, ListPriceDiff, PriceDiff
+```{r include=FALSE}
+model_4 <- glm(Purchase ~ LoyalCH + ListPriceDiff + PriceDiff + Store7,
+               data = OJ_final, family = "binomial" )
+```
+
+```{r echo=FALSE,}
+#Calculate AIC and McFadden pseudo-r2
+paste("AIC:",round(extractAIC(model_4, k=2)[2],2))
+
+round(PseudoR2(model_4, which = "McFadden"),4)
+```
+
+### Summary of the "Best" Model (model_4)
+```{r echo=FALSE}
+round(summary(model_4)$coefficients,2)
+
+```
+
+### Confidence Intervals for the Computed Odds Ratios for model_4 variables
+Here we will exponentiate the variable coefficients to find the odds ratios and construct a 95% confidence interval plot. 
+***Note:*** *the LoyalCH and PriceDiff coefficients have been raised to the $^{.1}$ power to indicate an incremental change in x of .1 instead of 1.*
+
+```{r include=FALSE}
+#modify LoyalCH and PriceDiff variables to represent .1 as the incremental increase
+model_4_mod <- glm(Purchase ~ I(LoyalCH/.1) + ListPriceDiff + I(PriceDiff/.1) + Store7,
+               data = OJ_final, family = "binomial" )
+
+```
+
+```{r include=FALSE}
+#create confidence interval plot with exponentiated variables
+ci_table <- suppressMessages(round(exp(confint(model_4_mod)),3))
+
+ci_grob <- tableGrob(ci_table)
+ci_plot <- plot_model(type = c("est"), model_4_mod, show.values = TRUE, ci.lvl = .95, show.p = TRUE)
+```
+
+```{r echo=FALSE, fig.height=3,fig.width=8}
+#Show CI Table and Plot
+grid.arrange(ci_plot,ci_grob,nrow=1)
+```
+
+### Interpretation of model_4 Variables (all at a 95% Confidence Interval)
+* **LoyalCH** (shown as I(LoyalCH/.1)) Represents the odds of a Minute Maid purchase are lowered by a factor between .49 and .57 for each increase in .1 of LoyalCH assume all other variables remain constant.
++ **PriceDiff** (shown as I(PriceDiff/.1)) Represents the odds of a Minute Maid purchase are lowered by a factor between .70 and .82 for each $.10 increase in PriceDiff assuming all other variables remain constant.
++ **Store7** The odds of a Minute Maid purchase are lowered by a factor between .34 and .74, if the purchase is made at Store7, assuming all other variables remain constant.
++ **ListPriceDiff** not statistically significant.
+
+
+### Model Predicted Probabilities of Quantitative Variables
+
+```{r include=FALSE}
+pricediff <- plot_model(model_4,type = "pred", terms = c("PriceDiff [all]")) +
+  scale_x_continuous(limits = c(-.7,.7), breaks = c(-.7,-.35,0,.35,.7), 
+                     labels = scales::dollar) +
+  scale_y_continuous(limits = c(0,1), breaks = c(0,.25,.5,.75,1), 
+                     labels = scales::percent) +
+    ggtitle("Predicted Probability of Purchase", subtitle = "PriceDiff") +  
+          theme(plot.title = element_text(size = 9, hjust = .5), 
+                plot.subtitle = element_text(size = 7, hjust = .5))
+
+loyalch <- plot_model(model_4,type = "pred", terms = c("LoyalCH [all]"), ci.lvl  = .95) +
+  scale_x_continuous(limits = c(0,1)) +
+    ggtitle("Predicted Probability of Purchase", subtitle = "LoyalCH") +  
+          theme(plot.title = element_text(size = 9, hjust = .5), 
+                plot.subtitle = element_text(size = 7, hjust = .5))
+```
+
+```{r echo=FALSE,  fig.height=3, fig.width=8}
+grid.arrange(pricediff,loyalch ,nrow=1)
+```
+
+The above plots indicate predicted Minute Maid purchase probabilities for PriceDiff (left) and LoyalCH (right) given all other variables are held at their mean value.  From the PriceDiff plot, we see as PriceDiff increases the predicted probability of a Minute Maid purchase decreases.  Similarly, as LoyalCH increases, the predicted probability of a Minute Maid purchases decreases.  The lightly red shaded areas on both plots indicate the 95% confidence interval of the predicted probabilities.
+
+
+
+### Model Predicted Probabilities of Categorical Variables 
+Shown below in the Store7 plot, with all other model variables held at their mean value, we can see there is a slightly higher predicted probability of a Minute Maid purchase not at Store7.
+
+```{r include=FALSE}
+#create predicted probability plot for the Store7 variable
+cat_plot <- plot_model(model_4,type = "pred", terms = "Store7") + 
+  ggtitle("Predicted Probability of Purchase", subtitle = "Store7") +  
+          theme(plot.title = element_text(size = 9, hjust = .5), 
+                plot.subtitle = element_text(size = 7, hjust = .5),
+                axis.title.x = element_text(size = 6),
+                axis.title.y = element_text(size = 6))
+```
+
+```{r echo=FALSE, fig.height= 3, fig.width=3}
+grid.arrange(cat_plot)
+```
+
+
+
+### Suggestions for increasing the proportion of customers who purchase Minute Maid:
+
+```{r echo=FALSE, fig.height=3.25, fig.width=6 }
+suppressMessages(plot_model(model_4,type = "pred", terms = c("PriceDiff [all]",
+                                            "LoyalCH [.15,.3,.45,.6,.75,.9]", 
+                                            "Store7")) + 
+  scale_x_continuous(limits = c(-.7,.7), breaks = c(-.6,-.3,0,.3,.6), 
+                     labels = scales::dollar) +
+  scale_y_continuous(limits = c(0,1), breaks = c(0,.25,.5,.75,1), 
+                     labels = scales::percent) + 
+  geom_hline(yintercept=.4) + annotate("text", x=0, y=.46, 
+                                       label="Current MM Proportion = .39",
+                                       size = 3) +
+  ggtitle("Predicted Probabilities of Minute Maid Purchase") + 
+  theme(legend.position = "right", plot.title = element_text(size = 10, hjust = .5),
+        legend.key.height = unit(.2,"cm"),
+        legend.key.width = unit(.3,"cm"),
+        legend.justification = "top",
+        legend.title =  element_text(size = 8)))
+```
+
+Putting PriceDiff,LoyalCH, and Store7 along with a line showing the current MM purchase proportion into one plot, we begin to see opportunities to increase the proportion of MM purchases.  Targeting potential customers with as low as possible LoyalCH, where the PriceDiff is low, and preferably not at Store7 should be the goal.  As LoyalCH and PriceDiff increase we begin to see a diminishing probability of a MM purchase.  However, as long as we target customers who profile above the "Current Proportion" line we should expect to see an increase in proportion of MM purchases.
+
+## Summary and Recommendations
+In conclusion the model created for purchasing resulted in an accuracy slightly under .80 with sensitivity and specificity measuring at .77 and .81 respectively.  We can potentially look at increasing the sensitivity by changing the cutoff threshold (increasing the false positive rate) of this model.  This would have a negative impact on the overall accuracy, but would help prevent stock outs within stores.  Continued improvements of this model will help optimize purchasing.
+
+In addition we have created a customer profile largely based on a low PriceDiff, low LoyalCH, and focusing our attention away from Store 7 to help marketing target advertising to both current and potentially new customer's likeliness of purchasing Minute Maid orange juice.  
+

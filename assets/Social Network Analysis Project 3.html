@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Key Job Skills for Machine Learning and Data Scientist Positions</title>
+    <style>
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            background-color: #fff;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 35px;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+        
+        .course-info {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        p {
+            text-align: justify;
+            margin-bottom: 15px;
+        }
+        
+        .image-container {
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .image-placeholder {
+            background-color: #ecf0f1;
+            border: 2px dashed #bdc3c7;
+            padding: 40px;
+            margin: 15px 0;
+            border-radius: 8px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .side-by-side {
+            display: flex;
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .side-by-side .image-placeholder {
+            flex: 1;
+            margin: 0;
+        }
+        
+        .highlight-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .conclusion {
+            background-color: #e8f5e8;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 30px;
+            border: 1px solid #27ae60;
+        }
+        
+        strong {
+            color: #2c3e50;
+        }
+        
+        @media (max-width: 768px) {
+            .side-by-side {
+                flex-direction: column;
+            }
+            
+            body {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Understanding Key Job Skills for Machine Learning and Data Scientist Job Postings Using Social Network Analysis</h1>
+    
+    <div class="course-info">
+        <p><strong>DS 745</strong><br>
+        Matt Nelson</p>
+    </div>
+
+    <h2>Introduction</h2>
+    <p>Using a dataset of LinkedIn job postings from 2024, I will highlight the 20 most common job skills listed for both a Data Scientist and Machine Learning Engineer. With this dataset, I will use Social Network Analysis (SNA) to identify which job skills are most frequently connected to another job skill for each role (high edge weights), which of these job skills have the most strong and frequent connections relative to all other job skills (high weighted degree), and which job skills are more specialized, yet likely critical to the role when listed in the job description (high betweenness). With this information, companies can make more strategic hiring decisions by identifying candidates with specialized, impactful skills, while job seekers can better align their interests and expertise to meet the specific needs of potential employers.</p>
+
+    <h2>Data Cleaning</h2>
+    <p>After filtering out all other job postings, the data set returned 865 jobs Data Scientist roles and 862 Machine Learning roles. Next, I separated each of job skills listed in each job posting and combined similar skills to avoid redundancy. For example, if a job skill on a particular posting "data analysis" was listed and another skill listed was "data analytics", I combined these into one skill called "data analytics". After this I summed all of the job descriptions together and grouped them by job description (either Data Scientist or Machine Learning). I did this to find the most frequently included skills within each job title. In the interest of keeping the analysis general along with avoiding visual complexity of each Social Network Analysis plot, I reduced the total number of job skills to the most frequent 20 skills for each position. Here is the list for each:</p>
+
+    <div class="side-by-side">
+        <div class="image-placeholder">
+            <strong>Data Scientist Skills List</strong><br>
+            Replace with image1.png<br>
+            (Top 20 most frequent skills for Data Scientist positions)
+        </div>
+        <div class="image-placeholder">
+            <strong>Machine Learning Skills List</strong><br>
+            Replace with image2.png<br>
+            (Top 20 most frequent skills for Machine Learning positions)
+        </div>
+    </div>
+
+    <h2>Pairs of Job Skills Most Frequently Found</h2>
+    <p>Here is snippet of the most common pairs of job skills found in each role. Weight represents the number of times two job skills occur within a single job description.</p>
+
+    <div class="side-by-side">
+        <div class="image-placeholder">
+            <strong>Data Scientist Skill Pairs</strong><br>
+            Replace with image3.png<br>
+            (Table showing most common skill pairs and their weights)
+        </div>
+        <div class="image-placeholder">
+            <strong>Machine Learning Skill Pairs</strong><br>
+            Replace with image4.png<br>
+            (Table showing most common skill pairs and their weights)
+        </div>
+    </div>
+
+    <p>When visualized in a SNA plot with weighted edges we see these common job skill connections highlighted with thicker blue lines. It is interesting to see the Data Scientist role looks to have a much more concentrated focus of expected skills as the thick lines appear much more heavily concentrated in the middle of the plot, whereas Machine Learning jobs look to have a little bit more diverse skill set expected.</p>
+
+    <div class="side-by-side">
+        <div class="image-placeholder">
+            <strong>Data Scientist Network - Edge Weights</strong><br>
+            Replace with image5.png<br>
+            (Network diagram showing skill connections with weighted edges)
+        </div>
+        <div class="image-placeholder">
+            <strong>Machine Learning Network - Edge Weights</strong><br>
+            Replace with image6.png<br>
+            (Network diagram showing skill connections with weighted edges)
+        </div>
+    </div>
+
+    <h2>Both Strong and Highly Connected Nodes</h2>
+    <p>Given the highly connected nature of these data set where almost each node is connected to all other nodes, the degree for each node is almost all the same. Therefore, I used a weighted degree metric to identify highly connected nodes that also have strong connections. We can define these are core competencies for Data Scientist and Machine Learning positions. We see from the plot below, the size of the nodes is closely correlated to the frequency of skill that occurs within the job description.</p>
+
+    <div class="highlight-box">
+        <p>One thing interesting to highlight in the Machine Learning plot is despite data analytics being found more frequently in the job skill set than cloud computing or scikit-learn, but yet has a lower weighted degree. This suggests data analytics is slightly less connected within the network than cloud computing and scikit-learn.</p>
+    </div>
+
+    <div class="side-by-side">
+        <div class="image-placeholder">
+            <strong>Data Scientist - Weighted Degree</strong><br>
+            Replace with image7.png<br>
+            (Network diagram with node sizes based on weighted degree)
+        </div>
+        <div class="image-placeholder">
+            <strong>Machine Learning - Weighted Degree</strong><br>
+            Replace with image8.png<br>
+            (Network diagram with node sizes based on weighted degree)
+        </div>
+    </div>
+
+    <h2>Find Specialized and Important Skill Sets Within Each of the Roles</h2>
+    <p>Betweenness can be defined as a measure of how important the node is to the flow of information through a network. Betweenness in this instance seems to represent job skills that may be particularly important for an individual job listing, but may not occur in the most job postings. Below are plots where the node size is based on the 'betweenness' of each job skill.</p>
+
+    <div class="side-by-side">
+        <div class="image-placeholder">
+            <strong>Data Scientist - Betweenness Centrality</strong><br>
+            Replace with image9.png<br>
+            (Network diagram with node sizes based on betweenness centrality)
+        </div>
+        <div class="image-placeholder">
+            <strong>Machine Learning - Betweenness Centrality</strong><br>
+            Replace with image10.png<br>
+            (Network diagram with node sizes based on betweenness centrality)
+        </div>
+    </div>
+
+    <p><strong>Data Scientist Insights:</strong> Java, PyTorch, and Natural Language Processing (NLP) all have a high betweenness score. This may represent a specialized skill within the Data Scientist role that a particular company is looking for. For example, if the job description contains Natural Language Processing, a company may especially be looking for a candidate to be able to analyze and process text data. If PyTorch is listed on the job description, this may indicate a particular need to be able to build and deploy machine learning models.</p>
+
+    <p><strong>Machine Learning Insights:</strong> In machine learning positions, Pandas, Kubernetes, and data preparation represent high-betweenness job skills. In this instance, Pandas and data preparation may represent a company looking for an emphasis on the use of pandas for data cleaning, data transformation, feature engineering, etc. in preparation for model building or Kubernetes for model deployment.</p>
+
+    <div class="conclusion">
+        <h2>Conclusion</h2>
+        <p>To conclude, using Social Network Analysis with data from 2024 LinkedIn job postings, we found that important core skills of a Data Scientist include the use of <strong>Python, R, SQL, Data Visualization and Data Analytics</strong>. In addition to these core skills, <strong>Java, PyTorch, NLP</strong> seem to be specialized skills within the Data Scientist job field companies are looking for.</p>
+
+        <p>Whereas in Machine Learning careers core competencies include <strong>Python, TensorFlow, PyTorch, AWS, and Azure</strong>. In addition to this, an understanding of <strong>data preparation</strong> needed for model building and utilization of <strong>Kubernetes</strong> for model deployment are specialized skills companies may be looking for.</p>
+
+        <p>Understanding these high-betweenness skills can help companies make strategic hiring decisions and allow job seekers to better align their interests and skills to what a company is specifically looking for.</p>
+    </div>
+
+</body>
+</html>

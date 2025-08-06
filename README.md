@@ -2,21 +2,20 @@
 
 ![Matt Nelson](images/images.jpg)
 
-## Mission
+### Mission
 ###### Leveraging advanced analytics to uncover non-obvious patterns that enhance business margins and inform strategic decisions.
 
-## Projects
+# Projects
 
-#### Statistical Methods
+## Statistical Methods
 
-#### Sentiment Analysis
 
-#### Social Network Analysis
+## Sentiment Analysis
 
-#### Machine Learning
+## Social Network Analysis
 
-### More Projects
-- Project 1  
-- Project 2
+## Machine Learning
 
-### Interests
+
+
+# Interests

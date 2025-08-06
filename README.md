@@ -8,7 +8,7 @@
 # Projects
 ---
 ## Regression Analysis
-##### [Predictive and Explanatory Modeling of Minute Maid Orange Juice Purchases Using Logistic Regression] (assets/Project-2-Final----Matthew-Nelson.html)
+##### [Predictive and Explanatory Modeling of Minute Maid Orange Juice Purchases Using Logistic Regression](assets/Project-2-Final----Matthew-Nelson.html)
 -  Code
 
 

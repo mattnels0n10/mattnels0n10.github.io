@@ -6,10 +6,10 @@
 ###### Leveraging advanced analytics to uncover non-obvious patterns that enhance business margins and inform strategic decisions.
 
 # Projects
-
+---
 ## Regression Analysis
-###### Predictive and Explanatory Modeling of Minute Maid Orange Juice Purchases Using Logistic Regression
-[📄 View Project (DOCX)](assets/Project-2-Final----Matthew-Nelson.html)
+##### Predictive and Explanatory Modeling of Minute Maid Orange Juice Purchases Using Logistic Regression
+[Paper](assets/Project-2-Final----Matthew-Nelson.html)
 
 
 ## Sentiment Analysis

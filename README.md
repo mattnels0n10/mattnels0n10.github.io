@@ -16,7 +16,7 @@
 
 
 ## Sentiment Analysis
-<h5><a href="assets/Social%20Network%20Analysis%20Project%203.html"><u>Understanding Key Job Skills for Machine Learning and Data Scientist Job Postings Using Social Network Analysis</u></a></h5>
+<h5><a href="assets/Social%20Network%20Analysis%20Project%203_files/Social%20Network%20Analysis%20Project%203.html"><u>Understanding Key Job Skills for Machine Learning and Data Scientist Job Postings Using Social Network Analysis</u></a></h5>
 
 ## Social Network Analysis
 

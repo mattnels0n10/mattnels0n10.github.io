@@ -7,7 +7,9 @@
 
 # Projects
 
-## Statistical Methods
+## Regression Analysis
+###### Iron Man Project
+[📄 View Project (DOCX)](ironman_project.docx)
 
 
 ## Sentiment Analysis

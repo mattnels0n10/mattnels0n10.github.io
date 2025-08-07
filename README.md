@@ -27,6 +27,9 @@
 
 ## Social Network Analysis
 
+<h5><a href="assets/Statistical_Testing/Project-1---Final---Matthew-Nelson.html"><u>A Limited User Posting Model and its Impact on the User Retention Rate</u></a></h5> 
+- [View Code on GitHub](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Statistical_Testing/Project%201%20-%20Final%20-%20Matthew%20Nelson.Rmd)
+
 ## Machine Learning
 
 

@@ -8,7 +8,11 @@
 
 # Projects
 ---
-## Regression Analysis
+## Regression Analysis and Significance Testing
+
+<h5><a href="assets/Project-2-Final----Matthew-Nelson.html"><u>Predictive and Explanatory Modeling of Minute Maid Orange Juice Purchases Using Logistic Regression</u></a></h5>
+- [View Code on GitHub](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Project%202%20Final%20--%20Matthew%20Nelson.Rmd)
+
 <h5><a href="assets/Project-2-Final----Matthew-Nelson.html"><u>Predictive and Explanatory Modeling of Minute Maid Orange Juice Purchases Using Logistic Regression</u></a></h5>
 - [View Code on GitHub](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Project%202%20Final%20--%20Matthew%20Nelson.Rmd)
 

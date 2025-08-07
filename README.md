@@ -34,6 +34,6 @@
 #### [StatsThatMatter](https://stats-that-matter.com)
 [Gather Raw Data](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/StatsThatMatter/gather_data.py)
 [Gather Gamelogs](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/StatsThatMatter/gather_game_logs_parellel.py)
-[Feature Engineering and Cleaning Function](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/StatsThatMatter/seam shift feature engineer model and clean function.R)
+[Feature Engineering and Cleaning Function](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/StatsThatMatter/seam%20shift%20feature%20engineer%20model%20and%20clean%20function.R)
 [Model Building with XGBoost](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/StatsThatMatter/models%20and%20training%20data1%20elevation.R)
 

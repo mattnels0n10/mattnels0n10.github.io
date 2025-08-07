@@ -1,5 +1,5 @@
 # Portfolio
-![Matt Nelson](images/FAMILY PHOTO 2 .2.JPEG)
+![Matt Nelson](images/FAMILY PHOTO 2 .2.jpg)
 
 # Mission
 ---

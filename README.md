@@ -22,7 +22,7 @@
 - [View Code on GitHub](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Regression_project3/Project%203%20Final%20--%20Matthew%20Nelson.Rmd)
 
 ## Time Series Forecasting and Customer Lifetime Value Analysis
----
+
 <h5><a href="assets/Forecasting/paper.html"><u>Time Series Forecasting and Customer Lifetime Value Analysis </u></a></h5> 
 
 ## Sentiment Analysis

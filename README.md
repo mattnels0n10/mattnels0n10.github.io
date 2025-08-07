@@ -26,11 +26,11 @@
 
 <h5><a href="assets/Forecasting/paper.html">Time Series Forecasting and Customer Lifetime Value Analysis</a></h5> 
 
-## Sentiment Analysis
+## Social Network Analysis
 
 <h5><a href="assets/Social%20Network%20Analysis%20Project%203_files/Social%20Network%20Analysis%20Project%203.html">Understanding Key Job Skills for Machine Learning and Data Scientist Job Postings Using Social Network Analysis</a></h5>
 
-## Social Network Analysis
+## Sentiment Analysis 
 
 <h5><a href="assets/Sentiment_Analysis/sentiment.html">Exploratory Analysis: Testing Daily Pregame Sentiment of the New York Mets 2024 Season to Predict Daily Betting Moneylines Movement</a></h5> 
 

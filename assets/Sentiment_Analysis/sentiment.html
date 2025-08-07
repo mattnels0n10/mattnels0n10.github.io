@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exploratory Analysis: Pregame Sentiment & Betting Lines</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #0a3d62;
+    }
+    p {
+      margin-bottom: 1rem;
+    }
+    ul {
+      margin-left: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    img {
+      display: block;
+      margin: 1rem auto;
+      max-width: 100%;
+    }
+    .blog-heading {
+      font-size: 1.3rem;
+      margin-top: 2rem;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      color: #2d3436;
+    }
+    .meta-info {
+      font-size: 0.9rem;
+      color: #888;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Exploratory Analysis: Testing Daily Pregame Sentiment of the New York Mets 2024 Season to Predict Daily Betting Moneylines Movement</h1>
+  <p class="meta-info">DS745 | Matt Nelson</p>
+
+  <p><strong>Introduction</strong></p>
+  <p>It is generally understood that when sportsbook makers set betting lines, their goal is not to predict the actual outcome of a game, but rather to balance the money wagered on each side... [snipped for brevity in this sample]</p>
+
+  <p>I will be analyzing the daily sentiment...<br>
+     ... Lastly, I will combine this data with MGM’s daily betting lines, line movement, and score results from www.sportsbookreview.com into a dataframe.</p>
+
+  <p class='blog-heading'>Data Cleaning and Model Building</p>
+  <p>After gathering data from the Reddit API...<br>
+     ... Below we see the word cloud showing the most common positive.</p>
+  <img src='mets1.png' alt='Positive Sentiment Word Cloud'>
+
+  <p class='blog-heading'>Comparing Pregame Sentiment Throughout the Season</p>
+  <p>Next, I grouped the comments by game date...<br>
+     ...Below is an area map showing the averaged sentiment scores throughout the New York Mets 2024 season.</p>
+  <img src='mets2.png' alt='Sentiment Area Chart'>
+
+  <p class='blog-heading'>An Attempt to Connect Daily Sentiment to the Daily Betting Moneylines</p>
+  <p>Next, I created a dataframe connecting...<br>
+     ...and ‘Streak_Going_into_Game’ is the number of consecutive games won or loss going into the game.</p>
+  <img src='mets3.png' alt='Betting Sentiment Correlations'>
+
+  <p>I think there are a few interesting things going on when analyzing the p-values and correlation coefficients:</p>
+  <ul>
+    <li>Statistically significant relationship between winning streaks and pregame sentiment.</li>
+    <li>Statistically significant relationship between winning streaks and line movement.</li>
+    <li>Opening line seems more influenced by streaks than closing line.</li>
+    <li>Closing line better predicts game outcomes.</li>
+    <li>Streaks do not predict outcomes directly.</li>
+  </ul>
+
+  <p class='blog-heading'>Putting It All Together</p>
+  <p>The winning or losing streak drives fan sentiment...<br>
+     ...the line corrects to reflect a more accurate probability of winning.</p>
+
+  <p class='blog-heading'>Why Understanding Betting Line Movement Matters</p>
+  <p>In 2024 season (174 games), if we had bet $100 on every Mets game based on opening line value...<br>
+     ...Understanding line movement and why it moves can provide a large payoff over the course of the season.</p>
+
+  <p class='blog-heading'>Next Steps</p>
+  <p>This analysis has only looked at Mets fan sentiment from one source...<br>
+     ...This would allow us to estimate expected return for future bets.</p>
+
+  <p class='blog-heading'>Conclusion</p>
+  <p>We scraped comments from Reddit...<br>
+     ...we see how fan sentiment may be playing a role in setting betting lines for Mets games—and potentially for other sports too.</p>
+</body>
+</html>

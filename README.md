@@ -20,7 +20,7 @@
 - [View Code on GitHub](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Project%202%20Final%20--%20Matthew%20Nelson.Rmd)
 
 <h5><a href="assets/Regression_project3/Project-3-Final----Matthew-Nelson.html">Analyzing Performance Metrics of the 2020 and 2021 Florida Ironman Race</a></h5> 
-- [View Code on GitHub](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Regression_project3/Project%203%20Final%20--%20Matthew%20Nelson.Rmd)
+- <small>[<a href="https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Regression_project3/Project%203%20Final%20--%20Matthew%20Nelson.Rmd">View Code on GitHub</a>]</small>
 
 ## Time Series Forecasting and Customer Lifetime Value Analysis
 

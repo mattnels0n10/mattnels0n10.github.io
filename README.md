@@ -30,12 +30,10 @@
 <h5><a href="assets/Sentiment_Analysis/sentiment.html"><u>Exploratory Analysis: Testing Daily Pregame Sentiment of the New York Mets 2024 Season to Predict Daily Betting Moneylines Movement </u></a></h5> 
 
 
-## Predictive Modeling
+## Major League Baseball Predictive Pitch Modeling
 #### [StatsThatMatter](https://stats-that-matter.com)
-- Scraping Files
-- Feature Engineering and Cleaning Function
-- Model Building
+[Gather Raw Data]
+[Gather Gamelogs]
+[Feature Engineering and Cleaning Function]
+[Model Building with XGBoost]
 
-
-
-# Interests

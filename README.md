@@ -12,7 +12,7 @@
 # Projects
 ---
 
-## Regression Analysis and Significance Testing
+## Regression Analysis and Proportion Testing
 
 <h5><a href="assets/Statistical_Testing/Project-1---Final---Matthew-Nelson.html">A Limited User Posting Model and its Impact on the User Retention Rate</a></h5> 
 - <small>[<a href="https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Statistical_Testing/Project%201%20-%20Final%20-%20Matthew%20Nelson.Rmd">View Code on GitHub</a>]</small>

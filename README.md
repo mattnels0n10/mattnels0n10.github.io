@@ -4,7 +4,7 @@
 
 # Mission
 ---
----
+
 <b>Leveraging advanced analytics to uncover non-obvious patterns that enhance business margins and inform strategic decisions.</b>
 
 # Projects

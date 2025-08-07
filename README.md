@@ -21,8 +21,8 @@
 - [View Code on GitHub](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Regression_project3/Project%203%20Final%20--%20Matthew%20Nelson.Rmd)
 
 ## Time Series Forecasting and Customer Lifetime Value Analysis
-<h5><a href="assets/Statistical_Testing/Project-1---Final---Matthew-Nelson.html"><u>A Limited User Posting Model and its Impact on the User Retention Rate</u></a></h5> 
-- [View Code on GitHub](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Statistical_Testing/Project%201%20-%20Final%20-%20Matthew%20Nelson.Rmd)
+<h5><a href="assets/Forecasting/paper.html"><u>Time Series Forecasting and Customer Lifetime Value Analysis </u></a></h5> 
+- [View Code on GitHub]
 
 
 ## Sentiment Analysis

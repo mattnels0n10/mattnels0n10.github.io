@@ -5,7 +5,8 @@
 ---
 <b>Leveraging advanced analytics to uncover non-obvious patterns that enhance business margins and inform strategic decisions.</b>
 
-### Skills
+# Skills
+---
 ![Skills](images/Picture1.png)
 
 # Projects
@@ -14,7 +15,7 @@
 ## Regression Analysis and Significance Testing
 
 <h5><a href="assets/Statistical_Testing/Project-1---Final---Matthew-Nelson.html">A Limited User Posting Model and its Impact on the User Retention Rate</a></h5> 
-- <small>[<a href="https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Statistical_Testing/Project%201%20-%20Final%20-%20Matthew%20Nelson.Rmd>View Code on GitHub</a>]</small>
+- <small>[<a href="https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Statistical_Testing/Project%201%20-%20Final%20-%20Matthew%20Nelson.Rmd">View Code on GitHub</a>]</small>
 
 <h5><a href="assets/Project-2-Final----Matthew-Nelson.html">Predictive and Explanatory Modeling of Minute Maid Orange Juice Purchases Using Logistic Regression</a></h5>
 - <small>[<a href="https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Project%202%20Final%20--%20Matthew%20Nelson.Rmd">View Code on GitHub</a>]</small>

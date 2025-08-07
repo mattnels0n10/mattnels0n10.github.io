@@ -2,6 +2,9 @@
 
 ![Matt Nelson](images/images.jpg)
 
+### Skills
+![Skills](images/Picture1.png)
+
 # Mission
 ---
 

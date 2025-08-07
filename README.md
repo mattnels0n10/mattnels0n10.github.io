@@ -3,7 +3,7 @@
 
 # Mission
 ---
-<b>Leveraging advanced analytics to uncover non-obvious patterns that enhance business margins and inform strategic decisions.</b>
+<b>Leveraging advanced analytics and domain expertise to uncover non-obvious, truth-revealing patterns that drive creative solutions and boost business margins.</b>
 
 # Skills
 ---

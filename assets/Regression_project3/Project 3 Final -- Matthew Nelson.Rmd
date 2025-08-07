@@ -1,0 +1,553 @@
+---
+title: "Analyzing Performance Metrics of the 2020 and 2021 Florida Ironman Race"
+author: "Matt Nelson"
+date: "2023-12-13"
+output:  html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+### Load Packages
+library(broom)
+library(readr)
+library(lubridate)
+library(tidyverse)
+library(hms)
+library(GGally)
+library(ggplot2)
+library(knitr)
+library(flextable)
+library(gridExtra)
+library(patchwork)
+library(car)
+library(glmnet)
+library(caret)
+library(leaps)
+```
+
+## I.Introduction
+
+This project will consist of taking data from 2020 and 2021 Ironman race results to determine the following:
+
+  1) If and how performance metrics (run, bike, swim, and transition time) from the 2020 race are useful in explaining the overall performance in 2021.
+  2) Are athletes that competed in 2020 and 2021 substantially different in terms of performance metrics than the athletes that only competed in 2021.
+  
+We will begin the project by cleaning the 2020 and 2021 data sets, joining the data sets together, then running multiple quality checks to ensure there is a proper join.  Taking the joined data set we will create a scatterplot matrix and begin to look for noteworthy trends between 2021 overall time and 2020 performance metrics along with gender.
+
+Next we will investigate univariate relationships between individual times of the 2020 performance metrics and the 2021 overall time.  This will  be done by fitting each of the 4 2020 performance metrics into a simple linear regression models.  We will take these 4 models and create a single univariate regression table and forest plot.  This will help us get an understanding of how each performance metric individually impacts 2021 overall time.
+
+As we begin to understand stand each variable's influence, we can combine these into an explanantory multiple linear regression model to address the first research question.  Our variables will be selected using the lasso regression function on our training data set to create a training model.  The results will be measured by Adjusted $R^{2}$, $R^{2}$, and RMSE on the input of the test data into the training model.
+
+We will address the 2nd research question by separating racers into 2 groups.  One group will consist of racers who competed in both 2020 and 2021.  The other being racers who only competed in 2021.  We will compare these athletes and their performance metrics by creating overlapping density plots.  This will help us identify time differences in any of the performance metrics based on these two groups. 
+
+```{r include=FALSE}
+### Read in both the 2020 and 2021 data files.
+FI_2020 <- read_csv("IM_Florida_20.csv")
+FI_2021 <- read_csv("IM_Florida_21.csv")
+```
+## II. Relating 2020 and 2021 performance
+In this portion of the project we will preprocess, join the 2020 and 2021 data sets, and filter out incorrectly recorded names from the joined data set.  After this we will create a scatter plot matrix to analyze noteworthy trends between response and predictor variables.
+
+**Preprocessing 2020 and 2021 Data sets**
+* Convert swim, bike, run, and overall times to numeric minutes
++ Compute transition minutes
++ Remove Gender from the Division and create a new variable called AgeGroup
+  - **Note:** PRO and PC Divisions will be removed from the data set, given the focus of Division is on age.
+  
+```{r include=FALSE}
+FI_2020_Mins <- FI_2020 %>%
+
+#Convert BikeTime to mins
+  mutate(BikeTime = hour(seconds_to_period(BikeTime))*60 + 
+           minute(seconds_to_period(BikeTime)),
+#Convert SwimTime to mins 
+         SwimTime = ifelse(substr(SwimTime, 1, 
+                                            nchar(SwimTime) + 2)>3,
+                          round(as.integer(substr(SwimTime, 1, 
+                                            nchar(SwimTime) - 4)),0), 
+                          round(SwimTime/60,0)),
+#Convert RunTime to mins
+         RunTime = hour(seconds_to_period(RunTime))*60 + 
+           minute(seconds_to_period(RunTime)),
+#Create Variable TransitionTime = OverallTime - (BikeTime + RunTime + SwimTime)
+         TransitionTime = hour(seconds_to_period(OverallTime))*60 + 
+           minute(seconds_to_period(OverallTime)) - 
+           BikeTime  - RunTime - SwimTime,
+#AgeGroup Variable denoting Age without gender
+         AgeGroup = str_sub(Division, start= 2), #remove first letter from Division
+#Convert OverallTime to mins.
+         OverallTime = hour(seconds_to_period(OverallTime))*60 +
+           minute(seconds_to_period(OverallTime)))%>%
+#filter PRO and PC from AgeGroup
+  filter(AgeGroup != "PRO" & AgeGroup != "PC")
+
+FI_2021_Mins <- FI_2021 %>%
+  mutate(BikeTime = hour(seconds_to_period(BikeTime))*60 + 
+           minute(seconds_to_period(BikeTime)),
+         SwimTime = ifelse(substr(SwimTime, 1, 
+                                            nchar(SwimTime) + 2)>3,
+                          round(as.integer(substr(SwimTime, 1, 
+                                            nchar(SwimTime) - 4)),0), 
+                          round(SwimTime/60,0)),
+         RunTime = hour(seconds_to_period(RunTime))*60 + 
+           minute(seconds_to_period(RunTime)),
+         TransitionTime = hour(seconds_to_period(OverallTime))*60 +
+           minute(seconds_to_period(OverallTime)) - 
+           BikeTime - SwimTime - RunTime,
+         AgeGroup = str_sub(Division, start= 2),
+         OverallTime = hour(seconds_to_period(OverallTime))*60 +
+           minute(seconds_to_period(OverallTime)))%>%
+#filter PRO and PC from AgeGroup
+  filter(AgeGroup != "PRO" & AgeGroup != "PC")
+```
+
+**Join 2020 and 2021 Data sets**
+We will join the 2020 and 2021 data sets by racer name.  Being this is an improper join key, the joined data should be interpreted with caution due to potential for incomplete merging.  Potential issues that could arise include things such misspelled name variations from 2020 to 2021, different racers having the same name, and names being unique to each data set not being included in the join.
+
+```{r include=FALSE}
+FI_2020_2021_join <- FI_2020_Mins %>%
+#use inner_join to take cases only in both 2020 and 2021 sets  
+  inner_join(.,FI_2021_Mins, by = "Name") %>%
+#filter instances where NA values are in 2020 Bike,Run and SwimTimes along with 2021 OverallTime  
+  filter(!is.na(RunTime.x),!is.na(SwimTime.x),!is.na(BikeTime.x),
+         !is.na(OverallTime.y))%>%
+  #change variable names for clarity
+  mutate(Country = Country.x, 
+         Gender = Gender.x, 
+         OverallTime_2020 = OverallTime.x, 
+         SwimTime_2020 = SwimTime.x, 
+         RunTime_2020 = RunTime.x, 
+         BikeTime_2020 = BikeTime.x,
+         FinishStatus_2020 = FinishStatus.x, 
+         TransitionTime_2020 = TransitionTime.x,
+         AgeGroup_2020 = AgeGroup.x,
+         OverallTime_2021 = OverallTime.y, 
+         SwimTime_2021 = SwimTime.y, 
+         RunTime_2021 = RunTime.y, 
+         BikeTime_2021 = BikeTime.y,
+         FinishStatus_2021 = FinishStatus.y, 
+         TransitionTime_2021 = TransitionTime.y,
+         AgeGroup_2021 = AgeGroup.y)%>%
+  select(Name, Country,Gender, AgeGroup_2020, SwimTime_2020, BikeTime_2020, RunTime_2020, 
+         FinishStatus_2020, TransitionTime_2020, OverallTime_2020, AgeGroup_2021, 
+         SwimTime_2021, BikeTime_2021, RunTime_2021, FinishStatus_2021,
+         TransitionTime_2021, OverallTime_2021)
+
+```
+
+**Quality Check**
+
+After searching for name matches that are likely not the same person, we see Kevin Young was in the 45-49 AgeGroup in 2020 and 30-34 AgeGroup in 2021.  His name will be filtered out of the data set.  In addition there are 2 John Briggs listed in the 2020 data set and only 1 in the 2021 data set.  Since we are joining by Name, there is an incorrect join and his name will be filtered out as well. 
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+FI_2020_2021_join %>%
+  #create AgeGroupcheck variables to see if racer moved up to next AgeGroup
+  mutate(AgeGroup2020check = as.numeric(str_sub(AgeGroup_2020, start = -2)),
+         AgeGroup2021check = as.numeric(substr(AgeGroup_2021, 1, 2))) %>%
+  #filter AgeGroup.2020 and AgeGroup.2021 are not equal or next age bracket up
+           filter(!is.na(AgeGroup2020check),
+                  AgeGroup2020check - AgeGroup2021check != -1 & 
+                  AgeGroup_2020 != AgeGroup_2021)%>%
+  select(Name, AgeGroup_2020, AgeGroup_2021)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+#Check for duplicate Names
+FI_2020_2021_join %>%
+  group_by(Name)%>%
+  mutate(DuplicateNames = n())%>%
+  filter(DuplicateNames >1)%>%
+  select(Name,AgeGroup_2020,OverallTime_2021)
+```
+
+
+```{r include=FALSE, warning=FALSE}
+#Create df with all values filtered out
+check.filter <- FI_2020_2021_join %>%
+  #create AgeGroupcheck variables to see if racer moved up to next AgeGroup
+  mutate(AgeGroup2020check = as.numeric(str_sub(AgeGroup_2020, start = -2)),
+         AgeGroup2021check = as.numeric(substr(AgeGroup_2021, 1, 2))) %>%
+  #filter AgeGroup.x and AgeGroup.y are not equal or next age bracket up
+          filter(AgeGroup2020check - AgeGroup2021check == -1 |
+                  AgeGroup_2020 == AgeGroup_2021, Name != "John Briggs") %>%
+  select(Name,RunTime_2020,SwimTime_2020, ,BikeTime_2020, Gender,TransitionTime_2020,
+         OverallTime_2021, AgeGroup_2020)
+
+
+```
+
+
+**Scatter plot matrix with Noteworthy trends**
+From looking at the scatter plot matrix below, all variables appear to be mostly normally distributed.  There appears to be positive relationships between 2021 Overall minutes and 2020 Swim, Bike and Run minutes.  These relationships all look to be linear. SwimTime has a larger variance in data points, whereas BikeTime and RunTime has a smaller variance, but this variance seems to slightly increase with time. There also appears to be a couple outliers as noted by the dots on the top end of the gender boxplots.
+
+
+```{r echo=FALSE, fig.dim = c(5, 4), message=FALSE}
+ggpairs(data = check.filter, 
+        columns = c("SwimTime_2020", "BikeTime_2020", "RunTime_2020","Gender",
+                    "OverallTime_2021"),
+        mapping = aes(color = Gender),
+        axisLabels = "show", 
+        upper = list(continuous = wrap("cor", size = 2.25)),
+        title = "Comparing 2020 Bike, Swim, Run Minutes, and Gender to 2021 Overall Time") +
+  theme(axis.text = element_text(size = 6), 
+        title = element_text(size = 7.5),
+        strip.text.x = element_text(size = 5),
+           strip.text.y = element_text(size = 5))
+        
+```
+
+###    A.Univariate Relationships
+
+First we will fit four simple linear regression models predicting overall time in 2021; one model for each 2020 time metric (SwimTime, BikeTime, TransitionTime, and RunTime).  This will allow us analyze how the effect of each of the 4 variables independently influence the OverallTime_2021.
+
+```{r}
+swim_model <- lm(OverallTime_2021 ~ SwimTime_2020, data = check.filter)
+bike_model <- lm(OverallTime_2021 ~ BikeTime_2020, data = check.filter)
+run_model <- lm(OverallTime_2021 ~ RunTime_2020, data = check.filter)
+transition_model <- lm(OverallTime_2021 ~ TransitionTime_2020, 
+                       data = check.filter)
+```
+
+
+```{r echo=FALSE}
+#convert summaries using tidy, add confidence intervals and bind summaries
+uni_results <- bind_rows(tidy(swim_model, conf.int = TRUE) %>% 
+                           filter(term != "(Intercept)"),  
+                         tidy(bike_model, conf.int = TRUE) %>% 
+                           filter(term != "(Intercept)"),  
+                         tidy(run_model, conf.int = TRUE) %>% 
+                           filter(term != "(Intercept)"),
+                         tidy(transition_model, conf.int = TRUE) %>% 
+                           filter(term != "(Intercept)")) 
+#modify table combining conf.high / low / estimate
+uni_results1 <- uni_results %>%
+  mutate("estimate(95% CI)" = paste(round(estimate,2), " (",round(conf.low,2),", ",round(conf.high,2),")", sep = ""),
+         p.value = round(p.value,2),
+         std.error = round(std.error,2)) %>%
+  select(c("term","estimate(95% CI)","std.error","p.value"))
+  
+ft <- flextable(uni_results1)
+ft <-set_table_properties(ft, layout = "autofit", align = "left")
+ft <- paginate(ft, init = TRUE, hdr_ftr = TRUE)
+
+```
+
+```{r echo=FALSE, fig.align='center', fig.height=3, fig.width=4}
+#create forest plot
+p1<-uni_results %>% ggplot(aes(x = estimate, y= term)) + 
+  geom_pointrange(aes(xmin = conf.low, xmax = conf.high)) + 
+  xlab("estimate (Mins.)") + 
+  theme(plot.title = element_text(size = 8), 
+        axis.text = element_text(size = 6),
+        axis.title = element_text(size = 7),
+        panel.background = element_rect(fill='transparent'),
+        axis.line = element_line(colour = "black"),
+        axis.text.y =   element_text(angle = 60))
+```
+
+
+**Univariate Analysis**
+
+```{r echo = FALSE, fig.width=10, warning=FALSE}
+p1 /  gen_grob(ft, fit = "width", wrapping = FALSE) + plot_layout(ncol = 2) 
+
+```
+
+Combining these 4 models into a univariate regression table and forest plot above, we can see how each variable independently relates to the Overall 2021 time.  All four variables are positively correlated with OverallTime_2021 and are significant at a .05 confidence level.  Even at the low end of the confidence interval a one minute increase in TransitionTime_2020 has the largest predicted impact in OverallTime_2021 increase.  For every minute increase of 2020 TransitionTime, we can expect between a 7.26 and 10.73 minute increase in 2021 OverallTime.
+
+###   B.Multiple Regression Model
+
+We want to determine if and how performance metrics from the 2020 race (swim time, bike time, run time, and transition time) along with demographic information (gender and age group) are useful for explaining overall performance in the 2021 race (overall time)
+
+To do this we will first convert AgeGroup_2020 to numeric, split our data into a training and test set, then input multiple combinations of predictor variables into a lasso regression model using the training data set.  We will analyze the lasso selected variables to make sure they can be easily explained, especially focusing on any  interaction terms.  Then we will input our test data into the trained lasso model and look for maximized Adj. $R^{2}$ and $R^{2}$ values, along with minimized RMSE values of the test data.  We will repeat the process until there is a satisfactory model that is easily interpreted and still fits the data well.
+
+After several iterations we will be using the following linear model:
+
+Y = 111.78 + 1.81$x_{TransitionTime}$ + .71$x_{BikeTime}$ + .78$x_{RunTime}$ + 2.08$x_{SwimTime}$ - 24.87$d_{male}$
+
+```{r include=FALSE}
+
+# Convert AgeGroup into a continuous variable
+check.filter1 <- check.filter %>%
+  mutate(Gender = as.factor(Gender),
+         AgeGroup_2020 = as.numeric(substr(AgeGroup_2020,1,2))+2) 
+```
+
+
+
+```{r echo=FALSE}
+#Train Models
+
+#split data into training / test sets
+set.seed(123)
+train_index = createDataPartition(
+  check.filter1$OverallTime_2021,
+  times = 1,
+  p = 0.7,
+  list = FALSE,
+  groups = 1
+)
+check_train <- check.filter1[train_index, ]
+check_test  <- check.filter1[-train_index, ]
+
+
+#build lasso mod for testing
+x_train = model.matrix(lm(OverallTime_2021 ~ TransitionTime_2020 + BikeTime_2020 + 
+                                         RunTime_2020 + SwimTime_2020 + Gender,
+                                         data = check_train))[,-1]
+
+x_test = model.matrix(lm(OverallTime_2021 ~ TransitionTime_2020 + BikeTime_2020 + 
+                                         RunTime_2020 + SwimTime_2020 + Gender,
+                                         data = check_test))[,-1]
+
+mod_lasso <- cv.glmnet(y= check_train$OverallTime_2021, x = x_train, alpha = 1)
+
+cv <- mod_lasso$lambda.min
+
+
+```
+
+**Analysis**
+
+Our multiple linear regression model shows all 4 2020 performance components having an impact on the 2021 Overall time.  This can be seen on the Variable Coefficients table below.  2020 SwimTime is the most impactful on the 2021 Overall Time of these 4.  On average, for every minute increase in SwimTime, we can expect a 2.04 minute increase in OverallTime.  For every minute increase in TransitionTime we can expect 1.81 minute increase, BikeTime a .71 minute increase, and RunTime as .78 minute increase.  In addition, we can expect a competing male to perform approximately 25 minutes better than a female, when all other variables are fixed.
+
+Our $R^{2}$ value of .713 on the test data set tells us we can expect our regression line to account for 71% of the variance.  In addition we see an RMSE value of 60.95. 
+
+```{r echo=FALSE}
+#Coefficients table
+lasso_coefs <- as.matrix(coef(mod_lasso, s = "lambda.min")[-1,])
+lasso_coefs_nonzero <-as.matrix(lasso_coefs[lasso_coefs[,1] !=0,])
+
+coef_df <- data.frame(
+  Variable = rownames(lasso_coefs_nonzero),
+  Coefficient = round(as.numeric(lasso_coefs_nonzero),2)
+)
+
+coef_flex <- flextable(coef_df) %>%
+  set_table_properties(layout = "autofit", align = "center") %>%
+  set_caption("Variable Coefficients from Lasso Regression Using Optimal Lambda",
+              align_with_table = TRUE) %>% 
+    paginate(init = TRUE)
+coef_flex
+                              
+```
+
+
+```{r echo=FALSE}
+#check testing with RMSE, R^2, and Adj. R^2
+test_data = check_test %>% mutate(fit_lasso = predict(mod_lasso, x_test, s=cv)
+                                  )
+
+n <-length(check_test$OverallTime_2021)
+p <-nrow(lasso_coefs_nonzero)
+
+results <- test_data %>% summarize(r_squared =round(1-(sum((OverallTime_2021 -
+                                                         fit_lasso)^2)/
+                          sum((OverallTime_2021 - mean(OverallTime_2021))^2)),3),
+                        RMSE = round(sqrt(mean((OverallTime_2021 - fit_lasso)^2)),3),
+                        "Adj R^2" = round(1 - ((1-r_squared) * 
+                                                       (n-1)/ (n-p-1)),3),
+                        "R^2" = r_squared) %>%
+  select( -c(r_squared))
+
+results1 <- flextable(results)%>%
+  paginate(init = TRUE, hdr_ftr = TRUE) %>%
+  set_caption("Statisical Metrics", 
+              style = "Table Caption")
+                        
+results1
+
+```
+
+## III.How Repeat Athletes Compare To Others
+Here we will compare  performance metrics of athletes that competed in both 2020 and 2021 to those that competed in 2021 only.  We will do this by creating a data set with the 2 groups.  One being athletes that competed in both years.  The other being athletes that competed in only 2021.  We will create overlapping density plots of each performance metric.  This should help highlight differences in performance metrics between the two groups.
+
+
+
+```{r include=FALSE}
+#create table for Competitors of both years, and 2021 only.
+
+repeat_athletes <- FI_2020_Mins %>%
+  full_join(.,FI_2021_Mins, by = "Name") %>% #use full_join to include all sets 
+  filter(Name != "John Briggs", Name !="Kevin Young") %>% #filter incorrect names from above
+  mutate(Country = Country.x,   #change column names for easy read 
+         Gender = ifelse(!is.na(Gender.x),Gender.x,Gender.y),
+         OverallTime_2020 = OverallTime.x, 
+         SwimTime_2020 = SwimTime.x, 
+         RunTime_2020 = RunTime.x, 
+         BikeTime_2020 = BikeTime.x,
+         FinishStatus_2020 = FinishStatus.x, 
+         TransitionTime_2020 = TransitionTime.x,
+         AgeGroup_2020 = AgeGroup.x,
+         OverallTime_2021 = OverallTime.y, 
+         SwimTime_2021 = SwimTime.y, 
+         RunTime_2021 = RunTime.y, 
+         BikeTime_2021 = BikeTime.y,
+         FinishStatus_2021 = FinishStatus.y, 
+         TransitionTime_2021 = TransitionTime.y,
+         AgeGroup_2021 = AgeGroup.y) %>%
+    select(Name, Gender, Gender, RunTime_2020, SwimTime_2020, BikeTime_2020,
+           TransitionTime_2020, OverallTime_2020, RunTime_2021, SwimTime_2021, 
+           BikeTime_2021, TransitionTime_2021, OverallTime_2021)
+```
+
+
+
+
+```{r include=FALSE}
+#Find athlete times for each performance metric
+
+#Find all Swim times that competed in 2020 and 2021
+swim_both <- repeat_athletes %>%
+  na.omit() %>%
+  select(SwimTime_2021)
+
+#Find all Run times that competed in 2020 and 2021
+run_both <- repeat_athletes %>%
+  na.omit() %>%
+  select(RunTime_2021)
+
+#Find all Bike times that competed in 2020 and 2021
+bike_both <- repeat_athletes %>%
+  na.omit() %>%
+  select(BikeTime_2021)
+
+#Find all Transition times that competed in 2020 and 2021
+transition_both <- repeat_athletes %>%
+  na.omit() %>%
+  select(TransitionTime_2021)
+
+
+#Find all Swim times that only competed in 2021
+swim_2021 <- repeat_athletes %>%
+  filter(is.na(OverallTime_2020), !is.na(SwimTime_2021)) %>%
+  select(SwimTime_2021)
+
+#Find all run times that only competed in 2021
+run_2021 <- repeat_athletes %>%
+  filter(is.na(OverallTime_2020), !is.na(RunTime_2021)) %>%
+  select(RunTime_2021)
+
+#Find all bike times that only competed in 2021
+bike_2021 <- repeat_athletes %>%
+  filter(is.na(OverallTime_2020), !is.na(BikeTime_2021)) %>%
+  select(BikeTime_2021)
+
+#Find all transition times that only competed in 2021
+transition_2021 <- repeat_athletes %>%
+  filter(is.na(OverallTime_2020), !is.na(TransitionTime_2021)) %>%
+  select(TransitionTime_2021)
+```
+
+
+```{r include=FALSE, warning=FALSE}
+
+#Swim Plot
+swim_density <- data.frame(value = c(swim_both$SwimTime_2021, swim_2021$SwimTime_2021),
+                 group = rep(c("Both Years", "2021 Only"), c(156, 1844)))
+
+swim_plot <- ggplot(swim_density, aes(x = value, fill = group)) +
+  geom_density(position = "identity", alpha = 0.5, color = "black") +
+  labs(title = "Swim", x = "Minutes", y = "Freq") +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme_minimal() + theme(legend.key.size = unit(.3, 'cm'), plot.title = element_text(size = 10),
+                          axis.title =  element_text(size = 7),
+                          axis.text = element_text(size = 5))
+
+#Run Plot
+run_density <- data.frame(value = c(run_both$RunTime_2021, run_2021$RunTime_2021),
+                 group = rep(c("Both Years", "2021 Only"), c(156, 1553)))
+
+run_plot <- ggplot(run_density, aes(x = value, fill = group)) +
+  geom_density(position = "identity", alpha = 0.5, color = "black") +
+  labs(title = "Run", x = "Minutes", y = "Freq") +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme_minimal() + theme(legend.key.size = unit(.3, 'cm'), plot.title = element_text(size = 10),
+                          axis.title =  element_text(size = 7),
+                          axis.text = element_text(size = 5))
+
+#Transition 
+tran_density <- data.frame(value = c(transition_both$TransitionTime_2021, 
+                                     transition_2021$TransitionTime_2021),
+                 group = rep(c("Both Years", "2021 Only"), c(156, 1488)))
+
+tran_plot <- ggplot(tran_density, aes(x = value, fill = group)) +
+  geom_density(position = "identity", alpha = 0.5, color = "black") +
+  labs(title = "Transition", x = "Minutes", y = "Freq") +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme_minimal() + theme(legend.key.size = unit(.3, 'cm'), plot.title = element_text(size = 10),
+                          axis.title =  element_text(size = 7),
+                          axis.text = element_text(size = 5))
+
+#Bike Plot
+bike_density <- data.frame(value = c(bike_both$BikeTime_2021, bike_2021$BikeTime_2021),
+                 group = rep(c("Both Years", "2021 Only"), c(156, 1624)))
+
+bike_plot <- ggplot(bike_density, aes(x = value, fill = group)) +
+  geom_density(position = "identity", alpha = 0.5, color = "black") +
+  labs(title = "Bike", x = "Minutes", y = "Freq") +
+  scale_fill_manual(values = c("blue", "red")) +
+  theme_minimal() + theme(legend.key.size = unit(.3, 'cm'), plot.title = element_text(size = 10),
+                          axis.title =  element_text(size = 7),
+                          axis.text = element_text(size = 5))
+
+
+```
+
+```{r echo=FALSE, fig.height=3, fig.width=7}
+grid.arrange(swim_plot,tran_plot,bike_plot,run_plot, ncol = 2, top="Both Years vs. 2021 Only Performance Metric Comparisons")
+```
+
+```{r echo=FALSE, render= TRUE}
+#swim standard deivation and mean
+swim_mean_both <- round(mean(swim_both$SwimTime_2021),2)
+swim_mean_2021 <- round(mean(swim_2021$SwimTime_2021),2)
+swim_sd_both <- round(sd(swim_both$SwimTime_2021),2)
+swim_sd_2021 <- round(sd(swim_2021$SwimTime_2021),2)
+
+#run standard deivation and mean
+run_mean_both <- round(mean(run_both$RunTime_2021),2)
+run_mean_2021 <- round(mean(run_2021$RunTime_2021),2)
+run_sd_both <- round(sd(run_both$RunTime_2021),2)
+run_sd_2021 <- round(sd(run_2021$RunTime_2021),2)
+
+#bike standard deivation and mean
+bike_mean_both <- round(mean(bike_both$BikeTime_2021),2)
+bike_mean_2021 <- round(mean(bike_2021$BikeTime_2021),2)
+bike_sd_both <- round(sd(bike_both$BikeTime_2021),2)
+bike_sd_2021 <- round(sd(bike_2021$BikeTime_2021),2)
+
+#transition standard deivation and mean
+tran_mean_both <- round(mean(transition_both$TransitionTime_2021),2)
+tran_mean_2021 <- round(mean(transition_2021$TransitionTime_2021),2)
+tran_sd_both <- round(sd(transition_both$TransitionTime_2021),2)
+tran_sd_2021 <- round(sd(transition_2021$TransitionTime_2021),2)
+
+table_result <- data.frame(
+  "Performance Metric" = c("2021 SwimTime", "2021 RunTime", "2021 BikeTime", 
+                         "2021 TransitionTime"),
+  "Mean" = c(swim_mean_both, run_mean_both, bike_mean_both, 
+                             tran_mean_both),
+  "StDev" = c(swim_sd_both, run_sd_both, bike_sd_both, 
+                             tran_sd_both),
+  "Mean." = c(swim_mean_2021, run_mean_2021, bike_mean_2021, tran_mean_2021),
+  "StDev." = c(swim_sd_2021, run_sd_2021, bike_sd_2021, 
+                             tran_sd_2021))
+
+flextable(table_result) %>% 
+  add_header_row(colwidths = c(3, 2),
+  values = c("Both Years", " Only 2021")) %>%
+  autofit() %>% align(align = "right", part = "header") %>%
+  paginate() %>% fit_to_width(max_width = 3.5)
+
+
+```
+
+**Analysis**
+From looking at the overlapping density plots, swim times appear to have the largest difference in distribution between '2021 only' racers and 'both years' racers.  This difference is most notable at the tail end.  There appears to be a larger proportion of racers' swim times between 150-200 minutes in the 2021 only group.  Bike time look to have a similar distribution between the 2 groups, however, the average time looks to be lower for the the racers who competed in both years.  Run time and transition time each seem to have similar average times along with a similar distribution pattern between the 2 racer groups.
+
+Note: This analysis is strictly a comparison of performance metrics and how they compare between the 2 groups.  Factors such as gender, and age group are not included in this analysis.
+
+

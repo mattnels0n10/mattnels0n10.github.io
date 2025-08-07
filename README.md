@@ -1,16 +1,13 @@
 # Portfolio
-
 ![Matt Nelson](images/images.jpg)
+
+# Mission
+---
+<b>Leveraging advanced analytics to uncover non-obvious patterns that enhance business margins and inform strategic decisions.</b>
 
 ### Skills
 ![Skills](images/Picture1.png)
 
-# Mission
----
-
-<b>Leveraging advanced analytics to uncover non-obvious patterns that enhance business margins and inform strategic decisions.</b>
-<br>
-<br>
 # Projects
 ---
 

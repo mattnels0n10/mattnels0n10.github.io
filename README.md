@@ -31,7 +31,10 @@
 - [View Code on GitHub]
 
 ## Predictive Modeling
-[StatsThatMatter](https://stats-that-matter.com)
+#### [StatsThatMatter](https://stats-that-matter.com)
+- Scraping Files
+- Feature Engineering and Cleaning Function
+- Model Building
 
 
 

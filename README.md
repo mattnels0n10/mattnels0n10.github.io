@@ -28,7 +28,7 @@
 ## Social Network Analysis
 
 <h5><a href="assets/Sentiment_Analysis/sentiment.html"><u>Exploratory Analysis: Testing Daily Pregame Sentiment of the New York Mets 2024 Season to Predict Daily Betting Moneylines Movement </u></a></h5> 
-- [View Code on GitHub]
+
 
 ## Predictive Modeling
 #### [StatsThatMatter](https://stats-that-matter.com)

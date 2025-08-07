@@ -1,0 +1,183 @@
+---
+title: "A Limited User Posting Model and its Impact on the User Retention Rate"
+author: "Matt Nelson"
+date: "2023-10-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+#Load Packages
+library(readr)
+library(tidyverse)
+library(ggplot2)
+library(ggmosaic)
+library(gridExtra)
+```
+
+```{r include=FALSE}
+#Load Data
+platform_retention <- read_csv("platform_retention.csv")
+```
+
+## Introduction
+In this project I will create 2 plots to depict the 7-day retention rate by posting model and 2 plots to depict the number of site visits by day 7 by posting model.  I will provide analysis of which plot helps depict the data and why.  In addition I will test the data to see if there is statistical evidence to show a whether or not a limited posting model will increase the user retention rate.
+
+## Part 1:
+Which graph helps better explain the question on whether or not limiting user posts increases the 7-day retention when compared to the unlimited posting model.
+
+### Comparing a stacked bar graph and a mosaic plot to best depict whether or not limiting user posts increases the 7-day retention when compared to the unlimited posting model. 
+```{r fig.show='hide',include=FALSE, warning=FALSE}
+mosaic <- ggplot(platform_retention) +
+  geom_mosaic(aes(x = product(version), fill=retention_7), 
+              show.legend = TRUE) + 
+  scale_fill_manual(values=c("red","darkgreen","gray"),
+                    name = "7-Day Retention")+
+  theme_grey() + 
+  xlab("Posting Model") + 
+  ylab("7 Day Retention") + 
+  ggtitle("Mosaic Plot") + 
+  theme(legend.position = "bottom")
+
+stack_bar <-platform_retention %>%  ggplot(aes(version)) +
+  geom_bar(aes(fill = factor(retention_7, exclude = NULL,
+                             levels = c(NA,'TRUE','FALSE')))) +
+  scale_fill_manual(values=c("darkgreen","red","gray"),
+                    name = "7-Day Retention")+
+  theme_grey() +
+  xlab("Posting Model") + 
+  ylab("No. of Users") + 
+  ggtitle("Stacked Bar Graph") + 
+  theme(legend.position = "bottom") 
+  
+```
+
+```{r somePlot, echo=FALSE, fig.width=15, fig.height=6, warning=FALSE}
+grid.arrange(mosaic,stack_bar, nrow=1)
+```
+
+### Analysis
+I think the mosaic plot does a better job of presenting the data and answering the question of whether or not limiting user posts increase 7-day retention when compared to the unlimited posting model than the stacked bar graph.  
+
+First, the mosaic plot presents the data as a proportion of the whole, therefore making it easier to depict that the 7-Day Retention rate was slightly higher in the limited version of the posting model.
+
+Lastly, vertical axis on the mosaic plot shows the proportion to the responses to the 7 Day Retention, where as the stacked bar graph has a count of the total responses.  I believe this is not necessary information in answering the initial question and therefore not needed on the chart. 
+
+Note: I left NA responses on the graphs as they may be relevant to future analysis? 
+
+## Part 2:
+Which graph helps better explain the question on whether or not the number of site visits by day 7 differs the unlimited and limited posting models.
+
+### Comparing a Violin Graph and a Histogram to Best Help Depict the Part 2 Question 
+```{r fig.show='hide',include=FALSE}
+violin <- platform_retention %>%
+  filter(site_visits_7 < 40000)%>%  #filter the outlier
+  mutate(site_visits_7 = site_visits_7 + 1)%>% #adding 1 to avoid undefined log of 0
+  ggplot(aes(x = version , y = site_visits_7)) +
+  geom_violin() +
+  scale_y_continuous(trans = "log", breaks = c(0,5,10,25,50, 100,1000),
+                      labels = scales::number_format(accuracy = 1)) +
+  xlab("Posting Model") + 
+  ylab("Site Visits") + 
+  ggtitle("Violin Graph") +
+  theme(plot.subtitle = element_text(hjust = .5))
+
+histogram <- platform_retention%>%
+  mutate(site_visits_7 = site_visits_7 + 1)%>% #adding 1 to avoid undefined log 0
+  filter(site_visits_7 <4000) %>%   #filter the outlier
+  ggplot(aes(x = site_visits_7, fill = version)) +
+  geom_histogram(position = "dodge", bins = 30) + 
+   scale_x_continuous(trans = "log", breaks = c(0,5,10,25,50,100,1000),
+                      labels = scales::number_format(accuracy = 1)) +
+  theme_grey() +
+  theme(legend.position= c(.9,.9),
+        legend.key.height = unit(.25, 'cm'), #change legend key height
+        legend.key.width = unit(.25, 'cm'),
+        legend.title = element_text(size=8),
+        legend.text = element_text(size=6)) +
+  scale_fill_discrete(name = "Posting Model") + 
+  xlab("Site Visits") + 
+  ylab("count") + 
+  ggtitle("Histogram") +
+  theme(title =  element_text(hjust = .5))
+```
+
+```{r r somePlot, echo=FALSE, fig.width=15, fig.height=5}
+grid.arrange(violin,histogram, nrow=1)
+```
+
+Note: There was a value of 49,859 in the Site Visits column of the data.  This value is an extreme outlier and seems like a potential recording error.  **This data point has been temporarily removed from the data set for the remainder of the project until it can be further investigated.**
+
+
+### Analysis
+I think the violin plot does the better job of depicting the difference between models in site visits by day 7 compared to the histogram.  The reason being is the violin plot seems to provide a better view of the overall distribution of the data set.  The histogram also looks to do this by comparing green and red bar heights.  However, it could depict a misleading visual if the proportion of limited and unlimited posting models were unequal in the data set.  The histogram would favor the posting model with the most data points, potentially creating a skewed view when comparing the two posting models. 
+
+From looking at the violin plot, it appears there is a larger proportion of site visits in the limited posting model than is in the unlimited from about 10 - 50 site visits.  However, after about 50 site visits, the unlimited posting model seems to show a slightly larger proportion.  These differences are very slight making it hard to conclude from this graph alone if the site visits by day 7 days differ between posting models.  More analysis will need to be done.
+
+
+## Part 3: 
+### Investigate the statistical effect of limiting user posts increases 7-day retention when compared to the unlimited posting model.
+
+
+To determine whether there is a statistically significant increase in 7-day retention under the limited posting model when compared to the unlimited posting model, compare the p-value to the significance level.  I chose a significance level of .01 (&alpha; = .01) which is lower than the standard .05.  This will further reduce the chance of our hypothesis showing a false positive. 
+
+After testing I found the sample to be statistically significant (p-value = .0011) with the difference in proportion of the 7-day retention rate under the limited posting model to be .09 larger than the unlimited posting model with a confidence interval of [.002, .016] at a 99% confidence level.
+
+```{r echo=FALSE}
+platform_retention1 <- platform_retention %>% #Group df for prop.test
+  filter(!is.na(retention_7), site_visits_7 < 40000) %>%
+  group_by(version)%>%
+  summarise(true = sum(retention_7 == TRUE), total = n())
+```
+
+```{r echo=FALSE}
+seven_day_result <- prop.test(platform_retention1$true,platform_retention1$total, 
+                          conf.level = .99, alternative = "two.sided",
+                          correct = FALSE)
+round(seven_day_result$conf.int,4)
+```
+
+## Part 4:
+### Does the number of site visits by day 7 differ between the two posting models?
+
+After testing, I show there is not enough evidence to conclude there being a significant difference between the two posting models in relation to the number of site visits by day 7.
+
+```{r echo=FALSE}
+platform_retention2 <-platform_retention %>%
+  filter(site_visits_7 < 40000) %>%
+  pivot_wider(names_from = version, values_from = site_visits_7)
+```
+
+```{r echo = FALSE}
+site_visits <- t.test(platform_retention2$limited, platform_retention2$unlimited,
+       alternative = "two.sided",
+       paired = FALSE, conf.level = .95)
+
+paste("p-value = ",round(site_visits$p.value,4))
+```
+
+### Does 1-day retention differ between the two posting models?
+
+After testing, I show there is not enough evidence to conclude there being a significant difference in proportion between the two posting models in relation to the 1-day retention rate.
+
+```{r echo=FALSE}
+platform_retention3 <- platform_retention %>% #Group df for prop.test
+  filter(!is.na(retention_1), site_visits_7 < 40000) %>%
+  group_by(version)%>%
+  summarise(true = sum(retention_1 == TRUE), total = n())
+```
+
+```{r echo=FALSE}
+one_day_result <- prop.test(platform_retention3$true,platform_retention3$total,
+          conf.level = .99, alternative = "two.sided",
+          correct = FALSE)
+
+paste("p-value = ",round(one_day_result$p.value,4))
+```
+
+## Conclusion
+There is statistical evidence showing that moving to a limited posting model would improve the 7-day retention rate but only by a small amount.  However, there is not enough evidence to show the limited posting model would improve the 1-day retention rate or increase the number of 7-day site visits.  Further investigation into understanding the difference between the 1 and 7 day retention rate along with the day of the week may be some areas worth investigating in the next testing phase.
+

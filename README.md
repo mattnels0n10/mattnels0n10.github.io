@@ -13,6 +13,9 @@
 - [View Code on GitHub](https://github.com/mattnels0n10/mattnels0n10.github.io/blob/main/assets/Project%202%20Final%20--%20Matthew%20Nelson.Rmd)
 
 
+<h5><a href="assets/Regression_project3/Project-3-Final----Matthew-Nelson.html"><u>Analyzing Performance Metrics of the 2020 and 2021 Florida Ironman Race</u></a></h5> 
+- [View Code on GitHub](
+
 
 
 ## Sentiment Analysis

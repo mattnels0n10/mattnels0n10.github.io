@@ -41,6 +41,6 @@
 ## [StatsThatMatter](https://stats-that-matter.com)
 
 ###### Notes:
-- Raw Data Scraped, Cleaned, Transformed Daily
+- Raw Data Scraped, Cleaned, Transformed Daily in SQL Server using Python scripts
 - Models trained using XGBoost with Early Stopping
 

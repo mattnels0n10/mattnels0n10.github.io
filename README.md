@@ -1,13 +1,23 @@
 # Portfolio
 ![Matt Nelson](images/FAMILY PHOTO 2 .2.jpg)
 
+<br>
+
 # Mission
 ---
 <b>Leveraging advanced analytics and domain expertise to uncover non-obvious, truth-revealing patterns that drive creative solutions and boost business margins.</b>
 
+<br>
+<br>
+
+
 # Skills
 ---
 ![Skills](images/Picture1.png)
+
+<br>
+<br>
+
 
 # Major League Baseball Predictive Pitch Modeling
 ---
@@ -22,11 +32,14 @@
     - Tech Stack: SQL Server, Python, R, Shiny
 <br>
 <br>
-<br>
 
 
 # Dashboard Visualizations
 ---
+
+<br>
+<br>
+
 
 # Academic Projects
 ---
@@ -53,13 +66,4 @@
 ## Sentiment Analysis 
 
 <h5><a href="assets/Sentiment_Analysis/sentiment.html">Exploratory Analysis: Testing Daily Pregame Sentiment of the New York Mets 2024 Season to Predict Daily Betting Moneylines Movement</a></h5> 
-
-# Major League Baseball Predictive Pitch Modeling
----
-
-## [StatsThatMatter](https://stats-that-matter.com)
-
-###### Notes:
-- Raw Data Scraped, Cleaned, Transformed Daily in SQL Server using Python scripts
-- Models trained using XGBoost with Early Stopping
 

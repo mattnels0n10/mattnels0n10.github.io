@@ -12,7 +12,8 @@
 
 
 # Skills
----
+----
+--
 ---
 ![Skills](images/Picture1.png)
 

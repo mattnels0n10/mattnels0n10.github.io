@@ -22,7 +22,7 @@
 # Major League Baseball Predictive Pitch Modeling
 ---
 
-## [StatsThatMatter](https://stats-that-matter.com)
+## [www.StatsThatMatter.com](https://stats-that-matter.com)
 
 ###### Notes:
 - Raw data scraped, cleaned, and transformed daily using automated Python and R scripts, stored in SQL Server.

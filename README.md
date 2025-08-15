@@ -9,7 +9,22 @@
 ---
 ![Skills](images/Picture1.png)
 
-# Projects
+# Major League Baseball Predictive Pitch Modeling
+---
+
+## [StatsThatMatter](https://stats-that-matter.com)
+
+###### Notes:
+- Raw data scraped, cleaned, and transformed daily using automated Python and R scripts, stored in SQL Server.
+- Machine Learning
+    - Trained XGBoost models using grid search and early stopping
+    - Performed feature engineering to improve model performance
+    - Tech Stack: SQL Server, Python, R, Shiny
+ 
+## Dashboard Visualizations
+---
+
+# Academic Projects
 ---
 
 ## Regression Analysis and Proportion Testing

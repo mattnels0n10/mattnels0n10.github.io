@@ -20,8 +20,12 @@
     - Trained XGBoost models using grid search and early stopping
     - Performed feature engineering to improve model performance
     - Tech Stack: SQL Server, Python, R, Shiny
- 
-## Dashboard Visualizations
+<br>
+<br>
+<br>
+<br>
+<br>
+# Dashboard Visualizations
 ---
 
 # Academic Projects

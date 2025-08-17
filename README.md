@@ -38,6 +38,10 @@
 # Dashboard Visualizations
 ---
 
+## [Shiny Dashboard](https://mattnels0n10.shinyapps.io/ShinyDashboard/)
+- Inventory Analysis
+- Customer Lifetime Value (BG-NBD)
+- Demand Forecasting (ARIMA / ETS / ML)
 <br>
 <br>
 

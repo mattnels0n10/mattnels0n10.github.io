@@ -30,6 +30,7 @@
 - Machine Learning
     - Trained XGBoost models using grid search and early stopping
     - Performed feature engineering to improve model performance
+    - Visualizations: R: Plotly, ggplot2
     - Tech Stack: SQL Server, Python, R, Shiny
 <br>
 <br>
@@ -42,6 +43,7 @@
 - Inventory Analysis
 - Customer Lifetime Value (BG-NBD)
 - Demand Forecasting (ARIMA / ETS / ML)
+- Visualizations: ggplot
 <br>
 <br>
 
